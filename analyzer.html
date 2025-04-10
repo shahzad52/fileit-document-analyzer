@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>AI Advisor</title>
+    <!-- Tailwind CSS -->
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css"
+      rel="stylesheet"
+    />
+    <!-- PDF.js and Mammoth for Document Analyzer -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+    <script>
+      // Set the PDF.js worker source
+      pdfjsLib.GlobalWorkerOptions.workerSrc =
+        "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js";
+    </script>
+  </head>
+  <body
+    class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen py-12 px-4"
+  >
+    <div class="max-w-4xl mx-auto">
+      <!-- Navigation Tabs -->
+      <div class="mb-8">
+        <nav class="flex space-x-4 justify-center">
+          <button
+            id="tabAdvice"
+            class="px-4 py-2 bg-blue-600 text-white rounded"
+          >
+            Legal Advice Search
+          </button>
+          <button
+            id="tabAnalyzer"
+            class="px-4 py-2 bg-blue-200 text-blue-700 rounded"
+          >
+            Legal Document Analyzer
+          </button>
+        </nav>
+      </div>
+
+      <!-- Legal Advice Search Section -->
+      <div id="adviceSection">
+        <div
+          class="bg-white rounded-2xl shadow-xl p-8 backdrop-blur-sm bg-opacity-90"
+        >
+          <h1
+            class="text-4xl font-bold mb-8 text-center bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent"
+          >
+            Legal Advice Search
+          </h1>
+          <form id="searchForm" class="space-y-8">
+            <div class="relative">
+              <label
+                for="country"
+                class="block text-lg font-medium text-gray-700 mb-2"
+                >Country</label
+              >
+              <div class="relative">
+                <select
+                  id="country"
+                  name="country"
+                  required
+                  class="mt-1 block w-full rounded-lg border-2 border-blue-100 shadow-sm p-3 appearance-none bg-white focus:border-blue-500 focus:ring focus:ring-blue-200 transition-all duration-200"
+                >
+                  <option value="">Select a country</option>
+                </select>
+                <div
+                  class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none"
+                >
+                  <svg
+                    class="h-5 w-5 text-gray-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M19 9l-7 7-7-7"
+                    />
+                  </svg>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <label
+                for="issue"
+                class="block text-lg font-medium text-gray-700 mb-2"
+                >Legal Issue</label
+              >
+              <textarea
+                id="issue"
+                name="issue"
+                rows="4"
+                required
+                class="mt-1 block w-full rounded-lg border-2 border-blue-100 shadow-sm p-3 focus:border-blue-500 focus:ring focus:ring-blue-200 transition-all duration-200 resize-none"
+              ></textarea>
+            </div>
+
+            <button
+              type="submit"
+              class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg py-3 px-6 text-lg font-semibold hover:from-blue-700 hover:to-indigo-700 transform hover:-translate-y-0.5 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            >
+              Get Advice
+            </button>
+          </form>
+
+          <div id="results" class="mt-12 hidden">
+            <h2 class="text-2xl font-semibold mb-6 text-gray-800">
+              Legal Advice
+            </h2>
+            <div
+              id="response"
+              class="bg-blue-50 rounded-lg p-6 shadow-inner prose prose-blue max-w-none border-l-4 border-blue-500 space-y-4"
+            ></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Legal Document Analyzer Section -->
+      <div id="analyzerSection" class="hidden">
+        <div
+          class="bg-white rounded-2xl shadow-xl p-8 backdrop-blur-sm bg-opacity-90"
+        >
+          <h1
+            class="text-4xl font-bold mb-8 text-center bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent"
+          >
+            Legal Document Analyzer
+          </h1>
+
+          <div class="space-y-8">
+            <!-- Document Upload Section -->
+            <div>
+              <label class="block text-lg font-medium text-gray-700 mb-2"
+                >Upload Document</label
+              >
+              <div class="flex items-center justify-center w-full">
+                <label
+                  class="flex flex-col border-4 border-dashed w-full h-32 hover:bg-gray-100 hover:border-blue-300 group"
+                >
+                  <div class="flex flex-col items-center justify-center pt-7">
+                    <svg
+                      class="w-10 h-10 text-blue-400 group-hover:text-blue-600"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                      ></path>
+                    </svg>
+                    <p
+                      class="lowercase text-sm text-gray-400 group-hover:text-blue-600 pt-1 tracking-wider"
+                    >
+                      Select a document
+                    </p>
+                  </div>
+                  <input
+                    type="file"
+                    id="documentUpload"
+                    accept=".pdf,.txt,.docx"
+                    class="hidden"
+                  />
+                </label>
+              </div>
+              <p
+                id="fileName"
+                class="text-sm text-gray-500 mt-2 text-center"
+              ></p>
+            </div>
+
+            <!-- Progress Bar -->
+            <div id="progressContainer" class="hidden">
+              <div class="flex justify-between mb-1">
+                <span
+                  class="text-sm font-medium text-blue-700"
+                  id="progressText"
+                  >0%</span
+                >
+                <span
+                  class="text-sm font-medium text-blue-700"
+                  id="progressStatus"
+                  >Processing...</span
+                >
+              </div>
+              <div class="w-full bg-gray-200 rounded-full h-2.5">
+                <div
+                  id="progressBar"
+                  class="bg-blue-600 h-2.5 rounded-full"
+                  style="width: 0%"
+                ></div>
+              </div>
+            </div>
+
+            <!-- Analysis Type Selection -->
+            <div>
+              <label class="block text-lg font-medium text-gray-700 mb-2"
+                >Analysis Type</label
+              >
+              <div class="grid grid-cols-3 gap-4">
+                <label
+                  class="flex items-center space-x-2 p-3 border rounded-lg cursor-pointer hover:bg-blue-50"
+                >
+                  <input
+                    type="radio"
+                    name="analysisType"
+                    value="summary"
+                    class="form-radio"
+                    checked
+                  />
+                  <span>Summary</span>
+                </label>
+                <label
+                  class="flex items-center space-x-2 p-3 border rounded-lg cursor-pointer hover:bg-blue-50"
+                >
+                  <input
+                    type="radio"
+                    name="analysisType"
+                    value="key-points"
+                    class="form-radio"
+                  />
+                  <span>Key Points</span>
+                </label>
+                <label
+                  class="flex items-center space-x-2 p-3 border rounded-lg cursor-pointer hover:bg-blue-50"
+                >
+                  <input
+                    type="radio"
+                    name="analysisType"
+                    value="potential-issues"
+                    class="form-radio"
+                  />
+                  <span>Potential Issues</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Analyze Button -->
+            <button
+              id="analyzeButton"
+              class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg py-3 px-6 text-lg font-semibold hover:from-blue-700 hover:to-indigo-700 transform hover:-translate-y-0.5 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Analyze Document
+            </button>
+
+            <!-- Results Section -->
+            <div id="resultsAnalyzer" class="mt-12 hidden">
+              <h2 class="text-2xl font-semibold mb-6 text-gray-800">
+                Analysis Results
+              </h2>
+              <div
+                id="responseAnalyzer"
+                class="bg-blue-50 rounded-lg p-6 shadow-inner prose prose-blue max-w-none border-l-4 border-blue-500 space-y-4"
+              ></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Combined Script -->
+    <script>
+      /***************************************
+       * Global Constants and Configurations *
+       ***************************************/
+      const GROQ_API_KEY =
+        // "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";
+        "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";
+
+      const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
+
+      /*************************
+       * Tab Navigation Logic  *
+       *************************/
+      const tabAdvice = document.getElementById("tabAdvice");
+      const tabAnalyzer = document.getElementById("tabAnalyzer");
+      const adviceSection = document.getElementById("adviceSection");
+      const analyzerSection = document.getElementById("analyzerSection");
+
+      tabAdvice.addEventListener("click", () => {
+        adviceSection.classList.remove("hidden");
+        analyzerSection.classList.add("hidden");
+        tabAdvice.classList.replace("bg-blue-200", "bg-blue-600");
+        tabAdvice.classList.replace("text-blue-700", "text-white");
+        tabAnalyzer.classList.replace("bg-blue-600", "bg-blue-200");
+        tabAnalyzer.classList.replace("text-white", "text-blue-700");
+      });
+
+      tabAnalyzer.addEventListener("click", () => {
+        analyzerSection.classList.remove("hidden");
+        adviceSection.classList.add("hidden");
+        tabAnalyzer.classList.replace("bg-blue-200", "bg-blue-600");
+        tabAnalyzer.classList.replace("text-blue-700", "text-white");
+        tabAdvice.classList.replace("bg-blue-600", "bg-blue-200");
+        tabAdvice.classList.replace("text-white", "text-blue-700");
+      });
+
+      /***********************************************
+       * Legal Advice Search Functionality (First File)
+       ***********************************************/
+      // Country list array
+      const countries = [
+        "Afghanistan",
+        "Albania",
+        "Algeria",
+        "Andorra",
+        "Angola",
+        "Antigua and Barbuda",
+        "Argentina",
+        "Armenia",
+        "Australia",
+        "Austria",
+        "Azerbaijan",
+        "Bahamas",
+        "Bahrain",
+        "Bangladesh",
+        "Barbados",
+        "Belarus",
+        "Belgium",
+        "Belize",
+        "Benin",
+        "Bhutan",
+        "Bolivia",
+        "Bosnia and Herzegovina",
+        "Botswana",
+        "Brazil",
+        "Brunei",
+        "Bulgaria",
+        "Burkina Faso",
+        "Burundi",
+        "Cambodia",
+        "Cameroon",
+        "Canada",
+        "Cape Verde",
+        "Central African Republic",
+        "Chad",
+        "Chile",
+        "China",
+        "Colombia",
+        "Comoros",
+        "Congo",
+        "Costa Rica",
+        "Croatia",
+        "Cuba",
+        "Cyprus",
+        "Czech Republic",
+        "Denmark",
+        "Djibouti",
+        "Dominica",
+        "Dominican Republic",
+        "East Timor",
+        "Ecuador",
+        "Egypt",
+        "El Salvador",
+        "Equatorial Guinea",
+        "Eritrea",
+        "Estonia",
+        "Eswatini",
+        "Ethiopia",
+        "Fiji",
+        "Finland",
+        "France",
+        "Gabon",
+        "Gambia",
+        "Georgia",
+        "Germany",
+        "Ghana",
+        "Greece",
+        "Grenada",
+        "Guatemala",
+        "Guinea",
+        "Guinea-Bissau",
+        "Guyana",
+        "Haiti",
+        "Honduras",
+        "Hungary",
+        "Iceland",
+        "India",
+        "Indonesia",
+        "Iran",
+        "Iraq",
+        "Ireland",
+        "Israel",
+        "Italy",
+        "Jamaica",
+        "Japan",
+        "Jordan",
+        "Kazakhstan",
+        "Kenya",
+        "Kiribati",
+        "Korea, North",
+        "Korea, South",
+        "Kosovo",
+        "Kuwait",
+        "Kyrgyzstan",
+        "Laos",
+        "Latvia",
+        "Lebanon",
+        "Lesotho",
+        "Liberia",
+        "Libya",
+        "Liechtenstein",
+        "Lithuania",
+        "Luxembourg",
+        "Madagascar",
+        "Malawi",
+        "Malaysia",
+        "Maldives",
+        "Mali",
+        "Malta",
+        "Marshall Islands",
+        "Mauritania",
+        "Mauritius",
+        "Mexico",
+        "Micronesia",
+        "Moldova",
+        "Monaco",
+        "Mongolia",
+        "Montenegro",
+        "Morocco",
+        "Mozambique",
+        "Myanmar",
+        "Namibia",
+        "Nauru",
+        "Nepal",
+        "Netherlands",
+        "New Zealand",
+        "Nicaragua",
+        "Niger",
+        "Nigeria",
+        "North Macedonia",
+        "Norway",
+        "Oman",
+        "Pakistan",
+        "Palau",
+        "Palestine",
+        "Panama",
+        "Papua New Guinea",
+        "Paraguay",
+        "Peru",
+        "Philippines",
+        "Poland",
+        "Portugal",
+        "Qatar",
+        "Romania",
+        "Russia",
+        "Rwanda",
+        "Saint Kitts and Nevis",
+        "Saint Lucia",
+        "Saint Vincent and the Grenadines",
+        "Samoa",
+        "San Marino",
+        "Sao Tome and Principe",
+        "Saudi Arabia",
+        "Senegal",
+        "Serbia",
+        "Seychelles",
+        "Sierra Leone",
+        "Singapore",
+        "Slovakia",
+        "Slovenia",
+        "Solomon Islands",
+        "Somalia",
+        "South Africa",
+        "South Sudan",
+        "Spain",
+        "Sri Lanka",
+        "Sudan",
+        "Suriname",
+        "Sweden",
+        "Switzerland",
+        "Syria",
+        "Taiwan",
+        "Tajikistan",
+        "Tanzania",
+        "Thailand",
+        "Togo",
+        "Tonga",
+        "Trinidad and Tobago",
+        "Tunisia",
+        "Turkey",
+        "Turkmenistan",
+        "Tuvalu",
+        "Uganda",
+        "Ukraine",
+        "United Arab Emirates",
+        "United Kingdom",
+        "United States",
+        "Uruguay",
+        "Uzbekistan",
+        "Vanuatu",
+        "Vatican City",
+        "Venezuela",
+        "Vietnam",
+        "Yemen",
+        "Zambia",
+        "Zimbabwe",
+      ];
+
+      const countrySelect = document.getElementById("country");
+      countries.forEach((country) => {
+        const option = document.createElement("option");
+        option.value = country;
+        option.textContent = country;
+        countrySelect.appendChild(option);
+      });
+
+      // (Optional) Add keyup event for country select for auto-selection (if needed)
+      countrySelect.addEventListener("keyup", (e) => {
+        const searchTerm = e.target.value.toLowerCase();
+        Array.from(countrySelect.options).forEach((option) => {
+          if (option.value === "") return;
+          const match = option.textContent.toLowerCase().includes(searchTerm);
+          if (match && !option.selected) {
+            option.selected = true;
+            return;
+          }
+        });
+      });
+
+      // Function to generate legal advice using the GROQ API
+      async function generateLegalAdvice(country, issue) {
+        const prompt = `Provide legal advice for the following issue in ${country}:
+Issue: ${issue}
+Important: Provide only general guidance and always recommend consulting with a qualified legal professional.
+"steps":
+    "Step 1: Action item",
+    "Step 2: Action item",
+    "Step 3: Action item"`;
+
+        const response = await fetch(GROQ_API_URL, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${GROQ_API_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            // model: "llama-3.3-70b-versatile",
+            model: "deepseek-r1-distill-llama-70b",
+            messages: [
+              {
+                role: "user",
+                content: prompt,
+              },
+            ],
+            temperature: 0,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to generate advice");
+        }
+
+        const data = await response.json();
+        return data.choices[0].message.content;
+      }
+
+      // Event listener for Legal Advice Search form submission
+      document
+        .getElementById("searchForm")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const country = document.getElementById("country").value;
+          const issue = document.getElementById("issue").value;
+
+          try {
+            const advice = await generateLegalAdvice(country, issue);
+            const resultsDiv = document.getElementById("results");
+            const responseDiv = document.getElementById("response");
+            resultsDiv.classList.remove("hidden");
+
+            const paragraphs = advice.split("\n");
+            const processedHtml = paragraphs
+              .map((para) => {
+                if (!para.trim()) return "";
+                const processedText = para.replace(
+                  /\*\*(.*?)\*\*/g,
+                  '<strong class="text-blue-700">$1</strong>'
+                );
+                return `<p class="text-gray-700 text-lg leading-relaxed">${processedText}</p>`;
+              })
+              .join("");
+            responseDiv.innerHTML = processedHtml;
+          } catch (error) {
+            alert("An error occurred while generating advice");
+          }
+        });
+
+      /**************************************************
+       * Legal Document Analyzer Functionality (Second File)
+       **************************************************/
+      // File reading functions
+      async function readPDFFile(file) {
+        const arrayBuffer = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        let fullText = "";
+
+        for (let i = 1; i <= pdf.numPages; i++) {
+          updateProgress((i / pdf.numPages) * 50);
+          const page = await pdf.getPage(i);
+          const textContent = await page.getTextContent();
+          const pageText = textContent.items.map((item) => item.str).join(" ");
+          fullText += pageText + "\n";
+        }
+
+        return fullText;
+      }
+
+      async function readDocxFile(file) {
+        const arrayBuffer = await file.arrayBuffer();
+        const result = await mammoth.extractRawText({ arrayBuffer });
+        return result.value;
+      }
+
+      async function readTextFile(file) {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = (e) => resolve(e.target.result);
+          reader.onerror = (e) => reject(e);
+          reader.readAsText(file);
+        });
+      }
+
+      // Update progress bar during document processing
+      function updateProgress(percentage, status = "") {
+        const progressContainer = document.getElementById("progressContainer");
+        const progressBar = document.getElementById("progressBar");
+        const progressText = document.getElementById("progressText");
+        const progressStatus = document.getElementById("progressStatus");
+
+        progressContainer.classList.remove("hidden");
+        progressBar.style.width = `${percentage}%`;
+        progressText.textContent = `${Math.round(percentage)}%`;
+        if (status) progressStatus.textContent = status;
+      }
+
+      // File Upload Handling for Document Analyzer
+      const documentUpload = document.getElementById("documentUpload");
+      const fileNameDisplay = document.getElementById("fileName");
+      const analyzeButton = document.getElementById("analyzeButton");
+
+      documentUpload.addEventListener("change", (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          fileNameDisplay.textContent = file.name;
+          analyzeButton.disabled = false;
+        }
+      });
+
+      // Event listener for Analyze Document button
+      analyzeButton.addEventListener("click", async () => {
+        const file = documentUpload.files[0];
+        const analysisType = document.querySelector(
+          'input[name="analysisType"]:checked'
+        ).value;
+
+        try {
+          updateProgress(0, "Reading document...");
+
+          // Read file content based on file type
+          let fileContent;
+          switch (file.type) {
+            case "application/pdf":
+              fileContent = await readPDFFile(file);
+              break;
+            case "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+              fileContent = await readDocxFile(file);
+              break;
+            default:
+              fileContent = await readTextFile(file);
+          }
+
+          updateProgress(60, "Analyzing content...");
+
+          // Generate appropriate prompt based on selected analysis type
+          const analysisPrompts = {
+            summary: `Provide a concise summary of the following document, highlighting its key points and main content:`,
+            "key-points": `Extract and list the most important key points from the following document:`,
+            "potential-issues": `Identify and describe potential legal issues or risks in the following document:`,
+          };
+
+          const prompt = `${analysisPrompts[analysisType]}\n\n${fileContent}`;
+
+          // Call the GROQ API to analyze the document
+          const response = await fetch(GROQ_API_URL, {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${GROQ_API_KEY}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              model: "llama-3.3-70b-versatile",
+              messages: [
+                {
+                  role: "user",
+                  content: prompt,
+                },
+              ],
+              temperature: 0.3,
+            }),
+          });
+
+          if (!response.ok) {
+            throw new Error("Failed to analyze document");
+          }
+
+          updateProgress(90, "Processing results...");
+
+          const data = await response.json();
+          const analysis = data.choices[0].message.content;
+
+          // Display the analysis results
+          const resultsDiv2 = document.getElementById("resultsAnalyzer");
+          const responseDiv2 = document.getElementById("responseAnalyzer");
+          resultsDiv2.classList.remove("hidden");
+
+          const paragraphs = analysis.split("\n");
+          const processedHtml = paragraphs
+            .map((para) => {
+              if (!para.trim()) return "";
+              const processedText = para.replace(
+                /\*\*(.*?)\*\*/g,
+                '<strong class="text-blue-700">$1</strong>'
+              );
+              return `<p class="text-gray-700 text-lg leading-relaxed">${processedText}</p>`;
+            })
+            .join("");
+          responseDiv2.innerHTML = processedHtml;
+          updateProgress(100, "Complete!");
+        } catch (error) {
+          alert("An error occurred while analyzing the document");
+          console.error(error);
+          document.getElementById("progressContainer").classList.add("hidden");
+        }
+      });
+    </script>
+  </body>
+</html>
